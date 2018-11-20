@@ -9,7 +9,7 @@ from keras.preprocessing import image
 
 import random
 
-from models import components, mae_loss, mse_loss, color_loss
+from models import components, mae_loss, mse_loss
 
 
 # Avoid crash on non-X linux sessions (tipically servers) when plotting images
@@ -19,8 +19,7 @@ import matplotlib.pyplot as plt
 
 # Images size
 w = 256
-h = 104
-colors_number = 5
+h = 256
 
 # Cyclic consistency factor
 
@@ -45,38 +44,8 @@ gen_b2a_history = {'bc':[], 'mae':[]}
 gen_b2a_history_new = []
 gen_a2b_history_new = []
 cycle_history = []
+
 # Data loading
-
-def extract_colors(data):
-    colors_data = np.empty((data.shape[0], colors_number, 3), dtype=np.float32)
-    j = 0
-    print("Extracting colors information...")
-    for image in tqdm(data):
-        k = 0
-        colors = np.empty((colors_number, 3), dtype=np.float32)
-
-        temp = image.transpose(1,2,0)
-
-        # extract dominant colors from the colors stripe at the bottom of the image
-        for pixel in temp[temp.shape[2] - 5]:
-            found = False
-            for element in colors:
-                if np.array_equal(pixel, element):
-                    found = True
-                    break
-            if not found:
-                colors[k] = pixel
-                k += 1
-
-        # normalize the colors vector
-        for i in range(colors_number):
-            colors[i] = (colors[i].astype(np.float32) - 127.5) / 127.5
-
-        # add it to the dataset
-        colors_data[j] = colors
-        j += 1
-
-    return colors_data
 
 def loadImage(path, h, w):
     
@@ -99,10 +68,7 @@ def loadImagesFromDataset(h, w, dataset, use_hdf5=False):
         print('\n', '-' * 15, 'Loading data from dataset', dataset, '-' * 15)
         with h5py.File(path, "r") as hf:
             for set_name in tqdm(["trainA_data", "trainB_data", "testA_data", "testB_data"]):
-                if dataset == "nike2adidas" or ("adiedges" in dataset) and "train" in set_name:
-                    data.append(hf[set_name][:1000].astype(np.float32))
-                else:
-                    data.append(hf[set_name][:].astype(np.float32))
+                data.append(hf[set_name][:].astype(np.float32))
 
         return (set_data for set_data in data)
 
@@ -132,11 +98,6 @@ def loadImagesFromDataset(h, w, dataset, use_hdf5=False):
         print("Import testB")
         ts_b = np.array([loadImage(p, h, w) for p in tqdm(test_b)])
 
-    # Extract dominant colors data from the picture if necessary
-    if dataset == "adiedges4":
-        colors_tr_a = extract_colors(tr_a)
-        colors_tr_b = extract_colors(tr_b)
-        return tr_a, tr_b, ts_a, ts_b, colors_tr_a, colors_tr_b
     return tr_a, tr_b, ts_a, ts_b
     
 
@@ -199,14 +160,8 @@ def saveModels(epoch, genA2B, genB2A, discA, discB):
 
 def train_new(epochs, batch_size, dataset, baselr, use_pseudounet=False, use_unet=False, use_decay=False, plot_models=True):
 
-    lr = baselr
-    disc_out_size = 32
-
     # Load data and normalize
-    if dataset=="adiedges4":
-        x_train_a, x_train_b, x_test_a, x_test_b, color_a, color_b = loadImagesFromDataset(h, w, dataset, use_hdf5=False)
-    else:
-        x_train_a, x_train_b, x_test_a, x_test_b = loadImagesFromDataset(h, w, dataset, use_hdf5=False)
+    x_train_a, x_train_b, x_test_a, x_test_b = loadImagesFromDataset(h, w, dataset, use_hdf5=False)
 
     x_train_a = (x_train_a.astype(np.float32) - 127.5) / 127.5
     x_train_b = (x_train_b.astype(np.float32) - 127.5) / 127.5
@@ -223,9 +178,11 @@ def train_new(epochs, batch_size, dataset, baselr, use_pseudounet=False, use_une
     print('Batch size:', batch_size)
     print('Batches per epoch: ', batchCount, "\n")
 
+    #Retrieve components and save model before training, to preserve weights initialization
     disc_a, disc_b, gen_a2b, gen_b2a = components(w, h, pseudounet=use_pseudounet, unet=use_unet, plot=plot_models)
     saveModels(0, gen_a2b, gen_b2a, disc_a, disc_b)
 
+    #Initialize fake images pools
     pool_a2b = []
     pool_b2a = []
 
@@ -242,7 +199,6 @@ def train_new(epochs, batch_size, dataset, baselr, use_pseudounet=False, use_une
 
     fake_pool_a = K.placeholder(shape=(None, 3, h, w))
     fake_pool_b = K.placeholder(shape=(None, 3, h, w))
-    # Define labels
 
     # Labels for generator training
     y_fake_a = K.ones_like(disc_a([fake_a]))
@@ -254,9 +210,6 @@ def train_new(epochs, batch_size, dataset, baselr, use_pseudounet=False, use_une
 
     fakelabel_a2b = K.zeros_like(disc_b([fake_b]))
     fakelabel_b2a = K.zeros_like(disc_a([fake_a]))
-
-    # Labels for color losses
-    y_color = K.ones_like(fake_b) 
 
     # Define losses
     disc_a_loss = mse_loss(y_true_a, disc_a([true_a])) + mse_loss(fakelabel_b2a, disc_a([fake_pool_a]))
@@ -289,6 +242,7 @@ def train_new(epochs, batch_size, dataset, baselr, use_pseudounet=False, use_une
     for e in range(1, epochs + 1):
         print('\n','-'*15, 'Epoch %d' % e, '-'*15)
 
+        #Learning rate decay
         if use_decay and (epoch_counter > 100):
             lr -= baselr/100
             adam_disc.lr = lr
