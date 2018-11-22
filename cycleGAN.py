@@ -158,7 +158,7 @@ def saveModels(epoch, genA2B, genB2A, discA, discB):
 
 # Training
 
-def train_new(epochs, batch_size, dataset, baselr, use_pseudounet=False, use_unet=False, use_decay=False, plot_models=True):
+def train(epochs, batch_size, dataset, baselr, use_pseudounet=False, use_unet=False, use_decay=False, plot_models=True):
 
     # Load data and normalize
     x_train_a, x_train_b, x_test_a, x_test_b = loadImagesFromDataset(h, w, dataset, use_hdf5=False)
@@ -336,4 +336,4 @@ def train_new(epochs, batch_size, dataset, baselr, use_pseudounet=False, use_une
 
 
 if __name__ == '__main__':
-    train_new(200, 1, "horse2zebra", lr, use_decay=True, use_pseudounet=False, use_unet=False, plot_models=False)
+    train(200, 1, "horse2zebra", lr, use_decay=True, use_pseudounet=False, use_unet=False, plot_models=False)
