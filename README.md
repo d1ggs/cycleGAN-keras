@@ -23,7 +23,7 @@ For those with limited GPU resources, I suggest downscaling the images through t
 
 To <b>train</b> the network: `python3 cycleGAN.py` <br>
 
-At the end of each epoch a sample image of predictions on test images is output into images folder, along with the losses plots.
+At the end of each epoch a sample image of predictions on test images is output into `./images` folder, along with the losses plots.
   
 <h2>Dependencies</h2>
 
