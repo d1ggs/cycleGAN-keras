@@ -4,25 +4,27 @@ Fully working keras implementation of cycleGAN in Python, realized during intern
 
   
 
-\[<a  href="https://github.com/junyanz/CycleGAN"> Authors' repository</a> - <a  href="https://arxiv.org/pdf/1703.10593.pdf">Paper</a>  \]
+\[<a  href="https://github.com/junyanz/CycleGAN"> CycleGAN Authors' repository</a> - <a  href="https://arxiv.org/pdf/1703.10593.pdf">CycleGAN paper</a>  \]
 
 
 <h2>Usage</h2>
 
-To download toy example datasets (check available datasets <a  href="">here</a>) use the datasets script:
+To download toy example datasets (check available datasets <a href="">here</a>) use the datasets script:
 
 `sh datasets.sh dataset_name`  <br>
 
-To enable faster image loading into de network you can use hdf5 format by setting `use_hdf5=True` in `train` function in `cycleGAN.py`. <br>
+To enable faster image loading into the network you can use hdf5 format by setting `use_hdf5=True` in `train` function in `cycleGAN.py`. <br>
 
-To build .hdf5 datsets use the make_dataset script in datasets folder:
+To build `.hdf5` datsets use the `make_dataset` script in datasets folder:
 
 `python3 make_dataset.py dataset_path number_of_channels`  <br>
 
-For those with limited GPU resources I suggest downscaling the images through the `--img_size` argument (square images are input and output of the network).
+For those with limited GPU resources, I suggest downscaling the images through the `--img_size` argument (square images are input and output of the network). <br>
 
+To <b>train</b> the network: `python3 cycleGAN.py` <br>
+
+At the end of each epoch a sample image of predictions on test images is output into images folder, along with the losses plots.
   
-
 <h2>Dependencies</h2>
 
 <ul>
