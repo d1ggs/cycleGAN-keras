@@ -59,3 +59,6 @@ At the end of each epoch a sample image of predictions on test images is output 
 <h3>maps</h3>
 
 ![195_maps_resnet](https://user-images.githubusercontent.com/24715359/48908829-c6432280-ee6b-11e8-9cf0-cc3286878fa6.png)
+
+<h2>Credits</h2>
+Keras residual block implementation by <a href="https://github.com/relh">Richard Higgins</a>
